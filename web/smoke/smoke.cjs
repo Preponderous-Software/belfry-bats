@@ -186,6 +186,8 @@ function colourCount(png) {
   // Near the church, the pilot takes the flock home.
   await page.evaluate(() => window.belfry.warp(window.belfryStatus.towerX - 16));
   await page.evaluate(() => window.belfry.autopilot(1));
+  await page.waitForTimeout(2500);
+  await shot('belfry-tower.png');  // the flock on its way into the belfry (the README's picture)
   s = await until((st) => st.phase !== 'flying', 150000);
   console.log(`night 1 over: ${s.home} of ${s.of} home, ending ${s.ending}, score ${s.score}`);
   if (s.phase !== 'over' || s.home < 1 || s.ending !== 'home') await fail('the pilot did not bring the flock into the belfry: ' + JSON.stringify(s));
