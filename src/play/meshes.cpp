@@ -150,7 +150,7 @@ uint32_t MeshData::add(strata::Engine& e, bool unlit) const {
     std::vector<float> lifted;
     if (!unlit) {
         lifted = col;
-        for (float& c : lifted) c = std::fmin(1.0f, c * 2.4f);
+        for (float& c : lifted) c = std::fmin(1.0f, c * 3.0f);
     }
     StrataTexturedMesh t{};
     t.mesh.positions = pos.data();

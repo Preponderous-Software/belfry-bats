@@ -78,7 +78,9 @@ Mat scale(float s) {
     return r;
 }
 
-float halfHeightFor(float aspect) { return std::max(13.5f, 12.5f / std::max(aspect, 0.2f)); }
+// At least 27 units of height, and 20 of width on a phone held upright (narrower would
+// hide what is ahead; wider would make the bats specks).
+float halfHeightFor(float aspect) { return std::max(13.5f, 10.0f / std::max(aspect, 0.2f)); }
 
 StrataPoint point(float x, float y, float z, float px, float world, float r, float g, float b, float a, uint32_t flags) {
     StrataPoint p{};
@@ -209,8 +211,11 @@ void Scene::draw(const World& w, float realSeconds, bool showGuide) {
         lights.push_back(l);
     };
     // Moonlight: one broad wash from high in the west, and a softer fill from the front.
-    light(camera_.x - 30.0f, 60.0f, 45.0f, 160.0f, 0.55f, 0.62f, 1.0f, 1.6f);
-    light(camera_.x + 10.0f, 18.0f, 40.0f, 75.0f, 0.6f, 0.62f, 0.9f, 1.1f);
+    // A row of soft lights above and in front of the village along the view,
+    // so every roof and wall has an edge, as under a bright moon.
+    for (int k = -3; k <= 3; ++k)
+        light(camera_.x + static_cast<float>(k) * 14.0f, 26.0f, 22.0f, 48.0f, 0.55f, 0.62f, 1.0f, 1.3f);
+    light(camera_.x - 30.0f, 60.0f, 45.0f, 160.0f, 0.55f, 0.62f, 1.0f, 1.2f);
     const float flicker = 0.9f + 0.1f * std::sin(realSeconds * 7.0f) * std::sin(realSeconds * 3.1f);
     light(lantern_[0], lantern_[1], 1.5f, 16.0f, 1.0f, 0.65f, 0.3f, 2.4f * flicker);
     std::vector<std::pair<float, size_t>> near;
