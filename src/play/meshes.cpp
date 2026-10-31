@@ -168,7 +168,7 @@ Village buildVillage(const Level& l) {
     Village v;
     const float end = l.towerX + 60.0f;
     // The ground, and the hills far behind.
-    v.lit.box(-60, -2, -90, end, 0, 14, kGround);
+    v.lit.box(-60, -40, -90, end, 0, 40, kGround);  // deep and wide: no gap below it on a tall screen
     for (float x = -60; x < end; x += 34.0f) {
         const float h = 9.0f + 6.0f * std::sin(x * 0.07f) + 4.0f * std::sin(x * 0.023f + 1.0f);
         v.lit.ball(x, -2.0f, -78.0f, 26.0f, h + 4.0f, 10.0f, kHill, 10, 4);

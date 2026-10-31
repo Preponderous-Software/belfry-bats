@@ -159,7 +159,8 @@ void Scene::follow(const World& w, float dt) {
     want = clampf(want, kStartX + std::min(4.0f, halfW * 0.4f), w.level.towerX + 2.0f);
     if (dt <= 0) camera_.x = want;
     else camera_.x += (want - camera_.x) * (1.0f - std::exp(-dt * 2.2f));
-    camera_.y = std::max(11.5f, halfH - 1.5f);
+    // Ground near the bottom of a wide view; on a tall one, more ground and less empty sky.
+    camera_.y = std::max(11.5f, std::min(halfH - 1.5f, 15.0f));
     const float eye[3] = {camera_.x, camera_.y + 3.0f, camera_.distance};
     const float target[3] = {camera_.x, camera_.y, 0};
     const float up[3] = {0, 1, 0};
