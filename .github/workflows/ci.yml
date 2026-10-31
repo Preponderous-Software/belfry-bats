@@ -1,0 +1,28 @@
+# The night's rules and their tests on a desktop compiler (no engine, no
+# GPU): the village, the flock, the owls, the dawn and the sounds.
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  sim:
+    name: Rules and tests (Linux)
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build the rules and tests (no engine)
+        run: |
+          cmake -S . -B build -DBELFRY_WARNINGS_AS_ERRORS=ON
+          cmake --build build -j4
+      - name: Tests
+        run: ctest --test-dir build --output-on-failure
