@@ -1,0 +1,7 @@
+build*/
+tour/
+autopilot/
+Testing/
+*.swp
+web/smoke/node_modules/
+smoke-out/
