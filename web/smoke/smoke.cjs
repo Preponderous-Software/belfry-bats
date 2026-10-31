@@ -133,7 +133,8 @@ function colourCount(png) {
   };
 
   await open(false);
-  if (!(await page.locator('#title').isVisible())) await fail('the title card was not shown');
+  if (!(await page.locator('#title').waitFor({ state: 'visible', timeout: 10000 }).then(() => true, () => false)))
+    await fail('the title card was not shown');
   await page.waitForTimeout(1500);
   const title = await shot('belfry-title.png');
   const colours = colourCount(title);
@@ -184,7 +185,9 @@ function colourCount(png) {
   console.log(`night 1 over: ${s.home} of ${s.of} home, ending ${s.ending}, score ${s.score}`);
   if (s.phase !== 'over' || s.home < 1 || s.ending !== 'home') await fail('the pilot did not bring the flock into the belfry: ' + JSON.stringify(s));
   await page.evaluate(() => window.belfry.autopilot(0));
-  if (!(await page.locator('#over').isVisible())) await fail('the end-of-night card was not shown');
+  // The page relabels itself from the status every 150 ms.
+  if (!(await page.locator('#over').waitFor({ state: 'visible', timeout: 10000 }).then(() => true, () => false)))
+    await fail('the end-of-night card was not shown');
   const words = await page.locator('#overCount').innerText();
   if (!new RegExp('^' + s.home + ' of ' + s.of + ' home$').test(words)) await fail('the card says ' + words);
   await page.waitForTimeout(800);

@@ -145,10 +145,17 @@ void MeshData::ball(float x, float y, float z, float rx, float ry, float rz, Rgb
 }
 
 uint32_t MeshData::add(strata::Engine& e, bool unlit) const {
+    // Lit colours are kept dark in this file (it is night) and lifted here,
+    // so the moonlit village reads on a phone held at arm's length.
+    std::vector<float> lifted;
+    if (!unlit) {
+        lifted = col;
+        for (float& c : lifted) c = std::fmin(1.0f, c * 2.4f);
+    }
     StrataTexturedMesh t{};
     t.mesh.positions = pos.data();
     t.mesh.normals = nrm.data();
-    t.mesh.colors = col.data();
+    t.mesh.colors = unlit ? col.data() : lifted.data();
     t.mesh.indices = idx.data();
     t.mesh.vertex_count = static_cast<int32_t>(pos.size() / 3);
     t.mesh.index_count = static_cast<int32_t>(idx.size());

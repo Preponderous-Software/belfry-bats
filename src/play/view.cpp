@@ -107,7 +107,7 @@ Scene::Scene(strata::Engine& engine) : engine_(engine) {
     StrataLighting light = strata::lightingDefaults(STRATA_LIGHTING_SUN);
     light.cascade_count = 0;  // no shadows: smooth on a phone, and the night casts none to speak of
     light.latitude_degrees = static_cast<float>(kLatitude);
-    light.fog = 1;
+    light.fog = 0;  // the village is small and the hills are far: fog only made it murky
     engine_.setLighting(light);
     const MeshData body = batBody(), left = batWing(true), right = batWing(false);
     for (int i = 0; i < kMaxBats; ++i) {
@@ -241,7 +241,7 @@ void Scene::draw(const World& w, float realSeconds, bool showGuide) {
         float flap = 0.25f + 0.75f * std::sin(t * 14.0f);
         float pitch = clampf(std::atan2(b.v.y, std::fabs(b.v.x) + 0.5f) * 0.6f, -0.6f, 0.6f);
         float upside = 0;
-        float size = b.stray ? 0.9f : 1.0f;
+        float size = b.stray ? 1.3f : 1.45f;  // drawn larger than they collide, to read on a phone
         if (b.state == BatState::Flock || b.state == BatState::Scared) {
             const float want = b.v.x >= -0.3f ? 0.0f : kPi;
             m.yaw = wrapAngle(m.yaw + wrapAngle(want - m.yaw) * 0.15f);
