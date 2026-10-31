@@ -26,6 +26,11 @@ public:
     void load(const World& w);
     // Follows the flock (dt in seconds of real time; 0 jumps straight there).
     void follow(const World& w, float dt);
+    // The canvas's size as the page laid it out (its aspect is the camera's).
+    void setViewport(int32_t width, int32_t height) {
+        viewW_ = width;
+        viewH_ = height;
+    }
     // The point in the flight plane under the pointer (0..1 across and down the canvas).
     Vec2 unproject(float nx, float ny) const;
     void draw(const World& w, float realSeconds, bool showGuide);
@@ -37,6 +42,7 @@ private:
     strata::Engine& engine_;
     Camera camera_;
     int night_ = -1;
+    int32_t viewW_ = 0, viewH_ = 0;
     std::vector<uint32_t> village_;
     struct Body {
         uint32_t body = 0, left = 0, right = 0;

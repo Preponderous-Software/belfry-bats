@@ -150,6 +150,10 @@ void Scene::load(const World& w) {
 
 void Scene::follow(const World& w, float dt) {
     engine_.drawableSize(camera_.width, camera_.height);
+    if (viewW_ > 0 && viewH_ > 0) {
+        camera_.width = viewW_;
+        camera_.height = viewH_;
+    }
     const float aspect = camera_.height > 0 ? static_cast<float>(camera_.width) / static_cast<float>(camera_.height) : 1.6f;
     const float halfH = halfHeightFor(aspect);
     const float tanH = std::tan(kFovY * 0.5f * kPi / 180.0f);

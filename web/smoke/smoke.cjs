@@ -148,6 +148,11 @@ function colourCount(png) {
   console.log(`flying: night ${s.night}, ${s.flock} in the flock, ${s.strays} strays, ${s.owls} owls`);
   if (s.phase !== 'flying' || s.night !== 1 || s.flock !== 8) await fail('Fly did not start night 1 with eight bats: ' + JSON.stringify(s));
   await checkLayout('flying');
+  // The camera's aspect is the canvas's (a stretched picture otherwise).
+  const view = JSON.parse(await page.evaluate(() => window.belfry.guide()));
+  const css = await page.evaluate(() => { const c = document.getElementById('canvas'); return { w: c.clientWidth, h: c.clientHeight }; });
+  console.log(`camera ${view.w}x${view.h}, canvas ${css.w}x${css.h} CSS px`);
+  if (Math.abs(view.w / view.h - css.w / css.h) > 0.03) await fail('the camera\'s aspect does not match the canvas');
 
   // Lead the flock to the right, as a player would: up and ahead of it.
   const box = await page.locator('#canvas').boundingBox();

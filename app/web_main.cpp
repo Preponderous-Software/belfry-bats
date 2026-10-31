@@ -172,15 +172,16 @@ EMSCRIPTEN_KEEPALIVE const char* belfry_guide() {
     if (!g) return "{}";
     const World& w = g->world;
     char buf[256];
-    std::snprintf(buf, sizeof buf, "{\"gx\":%.3f,\"gy\":%.3f,\"cx\":%.3f,\"cy\":%.3f,\"camX\":%.3f}", static_cast<double>(w.guide.x),
+    std::snprintf(buf, sizeof buf, "{\"gx\":%.3f,\"gy\":%.3f,\"cx\":%.3f,\"cy\":%.3f,\"camX\":%.3f,\"w\":%d,\"h\":%d}", static_cast<double>(w.guide.x),
                   static_cast<double>(w.guide.y), static_cast<double>(w.centre.x), static_cast<double>(w.centre.y),
-                  static_cast<double>(g->scene->camera().x));
+                  static_cast<double>(g->scene->camera().x), g->scene->camera().width, g->scene->camera().height);
     g->status = buf;
     return g->status.c_str();
 }
 EMSCRIPTEN_KEEPALIVE void belfry_resize(double w, double h) {
     if (!g || w < 1 || h < 1) return;
     g->engine->resize(static_cast<int32_t>(w), static_cast<int32_t>(h));
+    g->scene->setViewport(static_cast<int32_t>(w), static_cast<int32_t>(h));
     g->scene->follow(g->world, 0);
 }
 EMSCRIPTEN_KEEPALIVE const char* belfry_status() {
