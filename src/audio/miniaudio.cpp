@@ -1,0 +1,11 @@
+// miniaudio's implementation, built once with its own (relaxed) warnings.
+// Only playback is used: no decoding, encoding, generation or resource
+// management.
+#define MA_NO_DECODING
+#define MA_NO_ENCODING
+#define MA_NO_GENERATION
+#define MA_NO_RESOURCE_MANAGER
+#define MA_NO_NODE_GRAPH
+#define MA_NO_ENGINE
+#define MINIAUDIO_IMPLEMENTATION
+#include "miniaudio.h"

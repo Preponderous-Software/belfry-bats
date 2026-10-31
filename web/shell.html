@@ -1,0 +1,336 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+<title>Belfry Bats</title>
+<meta name="description" content="Belfry Bats: guide a flock of bats home to the church bell tower before dawn. A small Halloween game on the Strata engine.">
+<style>
+  :root {
+    --bg: #07080f; --panel: rgba(12, 12, 24, 0.86); --line: #2c2c48; --text: #ece8f4; --dim: #a7a3bd;
+    --lamp: #ffae4a; --btn: #1c1c32; --btn-on: #463064;
+    --sk-loader-bg: var(--bg); --sk-loader-fg: var(--text); --sk-loader-panel: var(--panel); --sk-loader-accent: var(--lamp);
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; height: 100%; background: var(--bg); color: var(--text);
+    font: 14px/1.35 system-ui, -apple-system, "Segoe UI", sans-serif; overflow: hidden;
+    -webkit-user-select: none; user-select: none; -webkit-touch-callout: none; -webkit-tap-highlight-color: transparent; }
+  body { display: flex; flex-direction: column; height: 100vh; height: 100dvh; }
+  #stage { position: relative; flex: 1 1 auto; min-height: 0; overflow: hidden; }
+  canvas#canvas { display: block; width: 100%; height: 100%; touch-action: none; outline: none; background: #000; cursor: crosshair; }
+  #top { flex: 0 0 auto; display: flex; gap: 10px; align-items: center; z-index: 2; background: var(--panel);
+    border-bottom: 1px solid var(--line); padding: max(6px, env(safe-area-inset-top)) max(10px, env(safe-area-inset-right)) 6px max(10px, env(safe-area-inset-left)); }
+  .brand { font-weight: 700; letter-spacing: 0.03em; white-space: nowrap; }
+  .brand a { color: var(--text); text-decoration: none; }
+  .stat { white-space: nowrap; color: var(--dim); }
+  .stat b { color: var(--text); font-weight: 600; }
+  #dawn { flex: 1 1 60px; min-width: 40px; height: 8px; border-radius: 4px; background: #15152a; border: 1px solid var(--line); overflow: hidden; }
+  #dawnFill { height: 100%; width: 0; background: linear-gradient(90deg, #2b2f6a, #b0577a 70%, #ffc06a); }
+  button { font: inherit; color: var(--text); background: var(--btn); border: 1px solid var(--line); border-radius: 6px;
+    padding: 6px 10px; min-height: 36px; cursor: pointer; touch-action: manipulation; }
+  body.touch button { min-height: 44px; min-width: 44px; }
+  button:focus-visible { outline: 2px solid var(--lamp); }
+  #soundBtn { font-size: 17px; line-height: 1; }
+  #soundBtn[aria-pressed="false"] { text-decoration: line-through; opacity: 0.7; }
+  #toast { position: absolute; left: 50%; top: 14px; transform: translateX(-50%); z-index: 1; pointer-events: none;
+    color: var(--lamp); font-weight: 600; text-shadow: 0 1px 3px #000, 0 0 8px #000; white-space: nowrap; opacity: 0; transition: opacity 0.4s; }
+  #toast.show { opacity: 1; }
+  #hint { position: absolute; left: 50%; bottom: max(14px, env(safe-area-inset-bottom)); transform: translateX(-50%); z-index: 1;
+    pointer-events: none; color: var(--dim); text-shadow: 0 1px 3px #000; white-space: nowrap; font-size: 13px; transition: opacity 0.8s; }
+  .card { position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%); z-index: 3; background: var(--panel);
+    border: 1px solid var(--line); border-radius: 12px; padding: 16px 20px; width: min(92vw, 440px); max-height: 86%;
+    overflow-y: auto; text-align: center; display: none; }
+  .card h1, .card h2 { margin: 0 0 6px; color: var(--lamp); }
+  .card h1 { font-size: 26px; letter-spacing: 0.02em; }
+  .card h2 { font-size: 20px; }
+  .card p { margin: 6px 0; }
+  .card .dim { color: var(--dim); font-size: 13px; }
+  .card .big { font-size: 30px; font-weight: 700; margin: 8px 0; }
+  .card table { margin: 8px auto; border-collapse: collapse; }
+  .card td { padding: 2px 10px; text-align: left; }
+  .card td.n { text-align: right; font-variant-numeric: tabular-nums; }
+  .card .row { display: flex; gap: 10px; justify-content: center; margin-top: 12px; flex-wrap: wrap; }
+  .card .go { background: #5a3a1a; border-color: var(--lamp); font-weight: 700; padding: 8px 22px; min-height: 48px; }
+  .for-touch { display: none; }
+  body.touch .for-touch { display: block; }
+  body.touch .for-keys { display: none; }
+  a { color: var(--lamp); }
+  kbd { background: #24243e; border: 1px solid var(--line); border-radius: 4px; padding: 0 4px; font-size: 12px; }
+  .wide { display: inline; }
+  @media (max-width: 520px) { .wide { display: none; } #top { gap: 7px; } .brand { font-size: 13px; } }
+  @media (max-width: 360px) { .stat.opt { display: none; } }
+</style>
+</head>
+<body>
+<div id="top">
+  <span class="brand"><a href="https://danielstephenson.dev/play" title="More games" target="_top">Belfry Bats</a></span>
+  <span class="stat" id="nightStat"></span>
+  <span class="stat" id="flockStat"></span>
+  <span class="stat opt" id="homeStat"></span>
+  <div id="dawn" title="Dawn" aria-label="Time until dawn"><div id="dawnFill"></div></div>
+  <button id="soundBtn" title="Sound on or off (M)" aria-label="Sound" aria-pressed="true">&#9835;</button>
+  <button id="helpBtn" title="How to play" aria-label="How to play">?</button>
+</div>
+<div id="stage">
+  <canvas id="canvas" tabindex="-1" oncontextmenu="event.preventDefault()"></canvas>
+  <div id="toast" aria-live="polite"></div>
+  <div id="hint"></div>
+  <div id="title" class="card" role="dialog" aria-labelledby="titleHead">
+    <h1 id="titleHead">Belfry Bats</h1>
+    <p>The night is nearly over. Guide your flock of bats home to the old church's bell tower before the sky gets light.</p>
+    <p class="for-keys">Move the mouse ahead of the flock and they follow it (or hold the arrow keys).</p>
+    <p class="for-touch">Hold your finger ahead of the flock and they follow it.</p>
+    <p>Swoop through the gaps between trees and chimneys. Keep clear of the owls. Gather stray bats along the way: they shimmer.</p>
+    <p class="dim">Five nights, each a little longer. Your score is every bat you bring home.</p>
+    <p class="dim" id="best"></p>
+    <div class="row"><button class="go" id="startBtn">Fly</button></div>
+  </div>
+  <div id="over" class="card" role="dialog" aria-labelledby="overHead">
+    <h2 id="overHead"></h2>
+    <p id="overWhy"></p>
+    <div class="big" id="overCount"></div>
+    <p class="dim" id="overScore"></p>
+    <div class="row"><button class="go" id="nextBtn">Next night</button></div>
+  </div>
+  <div id="done" class="card" role="dialog" aria-labelledby="doneHead">
+    <h2 id="doneHead">Morning</h2>
+    <p>The sun is up and the bell tower is full of sleeping bats.</p>
+    <div class="big" id="doneScore"></div>
+    <table id="doneTable"></table>
+    <p class="dim" id="doneBest"></p>
+    <div class="row"><button class="go" id="againBtn">Play again</button></div>
+  </div>
+  <div id="help" class="card" role="dialog" aria-labelledby="helpHead">
+    <h2 id="helpHead">How to play</h2>
+    <p class="for-keys">The flock follows the mouse: hold it ahead of them to keep them flying. Or hold the arrow keys (or
+      <kbd>W</kbd><kbd>A</kbd><kbd>S</kbd><kbd>D</kbd>). <kbd>M</kbd>: sound on or off.</p>
+    <p class="for-touch">The flock follows your finger: hold it ahead of them to keep them flying. Lift it and they circle where it was.</p>
+    <p>Bats that bump a roof or a tree are dazed and drop behind; fly back past them and they join again. A bat left far
+      behind is lost. Owls scare bats off for the night. Strays hang from eaves and trees and shimmer: fly close to gather them.</p>
+    <p>The bar at the top is the dawn. Bring the flock into the glowing belfry before it fills.</p>
+    <p class="dim">Built on the <a href="https://github.com/Preponderous-Software/strata" target="_blank" rel="noopener">Strata</a> engine;
+      <a href="https://github.com/Preponderous-Software/belfry-bats" target="_blank" rel="noopener">source</a>. Nothing is saved but your best score, in this browser.</p>
+    <div class="row"><button class="go" id="helpClose">Back to the night</button></div>
+  </div>
+</div>
+<script>
+(function () {
+  var $ = function (id) { return document.getElementById(id); };
+  var canvas = $('canvas');
+  var ready = false, call = {}, last = null;
+  var touchMode = window.matchMedia && window.matchMedia('(pointer: coarse)').matches;
+  function api(name, ret, args) { return Module.cwrap(name, ret, args || []); }
+  function shown(id) { return $(id).style.display === 'block'; }
+  function show(id, on) { $(id).style.display = on ? 'block' : 'none'; }
+  function best() { try { return Number(localStorage.getItem('belfry-best') || 0); } catch (e) { return 0; } }
+  function setTouch(on) { touchMode = on; document.body.classList.toggle('touch', on); }
+  function sizeCanvas() {
+    if (!ready) return;
+    var st = $('stage');
+    var dpr = window.devicePixelRatio || 1;
+    var k = dpr > 2 ? 2 / dpr : 1;
+    call.resize(Math.round(st.clientWidth * k), Math.round(st.clientHeight * k));
+  }
+  var toastTimer = null;
+  function toast(text) {
+    $('toast').textContent = text;
+    $('toast').classList.add('show');
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(function () { $('toast').classList.remove('show'); }, 1800);
+  }
+  function plural(n, one, many) { return n + ' ' + (n === 1 ? one : many); }
+
+  // ---- the pointer: a finger while down, a mouse while over the canvas
+  var pointer = { x: 0.5, y: 0.5, active: false, mouse: false };
+  function sendPointer() { if (ready) call.pointer(pointer.x, pointer.y, pointer.active ? 1 : 0, pointer.mouse ? 1 : 0); }
+  function at(e) {
+    var r = canvas.getBoundingClientRect();
+    pointer.x = Math.min(1, Math.max(0, (e.clientX - r.left) / r.width));
+    pointer.y = Math.min(1, Math.max(0, (e.clientY - r.top) / r.height));
+  }
+  canvas.addEventListener('pointerdown', function (e) {
+    e.preventDefault();
+    if (e.pointerType !== 'mouse' && !touchMode) setTouch(true);
+    at(e);
+    pointer.active = true;
+    pointer.mouse = e.pointerType === 'mouse';
+    if (canvas.setPointerCapture) try { canvas.setPointerCapture(e.pointerId); } catch (err) {}
+    sendPointer();
+    learned();
+  });
+  canvas.addEventListener('pointermove', function (e) {
+    at(e);
+    if (e.pointerType === 'mouse') { pointer.active = true; pointer.mouse = true; learned(); }
+    if (pointer.active) sendPointer();
+  });
+  function up(e) {
+    if (e.pointerType === 'mouse' && e.type !== 'pointerleave') return;  // a mouse keeps leading after a click
+    pointer.active = false;
+    sendPointer();
+  }
+  ['pointerup', 'pointercancel', 'pointerleave'].forEach(function (t) { canvas.addEventListener(t, up); });
+
+  // ---- keys: the arrows (or WASD) point the flock that way from its middle
+  var keys = {};
+  var dirs = { ArrowLeft: [-1, 0], ArrowRight: [1, 0], ArrowUp: [0, -1], ArrowDown: [0, 1],
+               KeyA: [-1, 0], KeyD: [1, 0], KeyW: [0, -1], KeyS: [0, 1] };
+  function keySteer() {
+    var dx = 0, dy = 0, any = false;
+    for (var k in keys) if (keys[k] && dirs[k]) { dx += dirs[k][0]; dy += dirs[k][1]; any = true; }
+    if (!any) {
+      if (!pointer.mouse && pointer.keys) { pointer.keys = false; pointer.active = false; sendPointer(); }
+      return;
+    }
+    pointer.keys = true; pointer.mouse = false; pointer.active = true;
+    pointer.x = 0.5 + dx * 0.32; pointer.y = 0.5 + dy * 0.3;
+    sendPointer();
+    learned();
+  }
+  window.addEventListener('keydown', function (e) {
+    if (window.miniaudio && window.miniaudio.unlock) window.miniaudio.unlock();
+    if (!ready) return;
+    if (dirs[e.code]) { e.preventDefault(); keys[e.code] = true; keySteer(); return; }
+    if (e.code === 'KeyM') { $('soundBtn').click(); return; }
+    if (e.code === 'Space' || e.code === 'Enter') {
+      var b = shown('title') ? 'startBtn' : shown('over') ? 'nextBtn' : shown('done') ? 'againBtn' : shown('help') ? 'helpClose' : null;
+      if (b) { e.preventDefault(); $(b).click(); }
+    }
+  });
+  window.addEventListener('keyup', function (e) { if (dirs[e.code]) { keys[e.code] = false; keySteer(); } });
+  window.addEventListener('blur', function () { keys = {}; keySteer(); });
+
+  var hintDone = false;
+  function learned() {
+    if (hintDone || !last || last.phase !== 'flying') return;
+    hintDone = true;
+    $('hint').style.opacity = '0';
+  }
+
+  // ---- the words, from the game's state
+  function refresh() {
+    if (!ready) return;
+    var s;
+    try { s = JSON.parse(call.status()); } catch (e) { return; }
+    var p = last || s;
+    $('nightStat').innerHTML = '<span class="wide">Night </span><b>' + s.night + '</b>/' + s.nights;
+    $('flockStat').innerHTML = '<b>' + s.flock + '</b> <span class="wide">in the </span>flock';
+    $('homeStat').innerHTML = '<b>' + s.home + '</b> home';
+    $('dawnFill').style.width = (s.dawn * 100).toFixed(1) + '%';
+    $('soundBtn').setAttribute('aria-pressed', s.muted ? 'false' : 'true');
+    if (s.phase === 'flying' && p.phase === 'flying' && s.night === p.night) {
+      if (s.gathered > p.gathered) toast(s.gathered - p.gathered > 1 ? 'Strays joined the flock!' : 'A stray joined the flock!');
+      else if (s.lost > p.lost) toast('A bat was lost');
+      else if (s.home > p.home && p.home === 0) toast('Home! Bring the rest in');
+      else if (s.dawn >= 0.8 && p.dawn < 0.8) toast('The sky is getting light!');
+    }
+    if (s.phase !== p.phase || s.night !== p.night || !last) onPhase(s);
+    last = s;
+    window.belfryStatus = s;
+  }
+  function onPhase(s) {
+    show('title', s.phase === 'title' && !shown('help'));
+    show('over', s.phase === 'over');
+    show('done', s.phase === 'finished');
+    if (s.phase === 'flying') {
+      hintDone = s.night > 1;
+      $('hint').textContent = touchMode ? 'Hold your finger ahead of the flock' : 'Lead the flock with the mouse (or the arrow keys)';
+      $('hint').style.opacity = hintDone ? '0' : '1';
+      toast('Night ' + s.night + ': ' + plural(s.flock, 'bat', 'bats') + ', ' + plural(s.owls, 'owl', 'owls') + ' about');
+    }
+    if (s.phase === 'title') $('best').textContent = best() ? 'Best so far: ' + best() + ' bats home' : '';
+    if (s.phase === 'over' || s.phase === 'finished') {
+      pointer.active = false; sendPointer();
+      var why = s.ending === 'dawn' ? 'Dawn broke before everyone was in.' : s.ending === 'none' ? 'No bats made it to the belfry this time.' :
+                'Everyone left is safe in the belfry.';
+      $('overHead').textContent = 'Night ' + s.night + ' is over';
+      $('overWhy').textContent = why;
+      $('overCount').textContent = s.home + ' of ' + s.of + ' home';
+      $('overScore').textContent = 'Score so far: ' + s.score + (s.lost ? '. ' + plural(s.lost, 'bat', 'bats') + ' lost.' : '.');
+    }
+    if (s.phase === 'finished') {
+      var b = best();
+      if (s.score > b) { try { localStorage.setItem('belfry-best', String(s.score)); } catch (e) {} }
+      $('doneScore').textContent = s.score + ' bats home';
+      var rows = '';
+      for (var i = 0; i < s.nights; i++) rows += '<tr><td>Night ' + (i + 1) + '</td><td class="n">' + s.nightHome[i] + ' of ' + s.nightOf[i] + '</td></tr>';
+      $('doneTable').innerHTML = rows;
+      $('doneBest').textContent = s.score > b ? (b ? 'A new best (it was ' + b + ').' : '') : 'Best so far: ' + b + '.';
+    }
+    call.pause(shown('help') ? 1 : 0);
+  }
+  function wire() {
+    document.querySelectorAll('button').forEach(function (b) { b.addEventListener('click', function () { b.blur(); }); });
+    $('startBtn').addEventListener('click', function () { call.start(); refresh(); });
+    $('nextBtn').addEventListener('click', function () { call.next(); refresh(); });
+    $('againBtn').addEventListener('click', function () { call.restart(); call.start(); refresh(); });
+    $('soundBtn').addEventListener('click', function () {
+      var s = JSON.parse(call.status());
+      call.sound(s.muted ? 1 : 0);
+      try { localStorage.setItem('belfry-sound', s.muted ? 'on' : 'off'); } catch (e) {}
+      refresh();
+    });
+    $('helpBtn').addEventListener('click', function () {
+      show('title', false); show('help', true); call.pause(1);
+    });
+    $('helpClose').addEventListener('click', function () {
+      show('help', false); call.pause(0);
+      if (last && last.phase === 'title') show('title', true);
+    });
+    document.addEventListener('visibilitychange', function () {
+      call.pause(document.visibilityState === 'hidden' || shown('help') ? 1 : 0);
+    });
+    window.addEventListener('touchstart', function () { if (!touchMode) setTouch(true); }, { passive: true });
+    window.addEventListener('resize', sizeCanvas);
+    if (window.ResizeObserver) new ResizeObserver(sizeCanvas).observe($('stage'));
+    setInterval(refresh, 150);
+  }
+  window.Module = {
+    canvas: canvas,
+    print: function (t) { console.log(t); },
+    printErr: function (t) { console.warn(t); },
+    onGameReady: function () {
+      call = {
+        pointer: api('belfry_pointer', null, ['number', 'number', 'number', 'number']),
+        start: api('belfry_start'),
+        next: api('belfry_next'),
+        restart: api('belfry_restart'),
+        pause: api('belfry_pause', null, ['number']),
+        sound: api('belfry_sound', null, ['number']),
+        autopilot: api('belfry_autopilot', null, ['number']),
+        warp: api('belfry_warp', null, ['number']),
+        guide: api('belfry_guide', 'string'),
+        resize: api('belfry_resize', null, ['number', 'number']),
+        status: api('belfry_status', 'string')
+      };
+      window.belfry = call;  // for the smoke test and the curious
+      ready = true;
+      StrataBoot.ready();
+      setTouch(touchMode);
+      wire();
+      sizeCanvas();
+      try { if (localStorage.getItem('belfry-sound') === 'off') call.sound(0); } catch (e) {}
+      refresh();
+    },
+    onRendererFailed: function (why) {
+      StrataLoader.fallback('engine', 'Belfry Bats needs WebGL 2, which this browser did not provide (' + why + ').');
+    }
+  };
+})();
+</script>
+<!-- emcc's script tag, kept inert: web/strata-boot.js starts it behind the
+     loading shell. data-bytes is the download's size, stamped by the build. -->
+<template id="strata-glue" data-bytes="0">{{{ SCRIPT }}}</template>
+<!-- The loading shell, vendored from Strata, and its bridge to this build; the
+     build puts both inline (web/strata_page.cmake). -->
+<script src="strata-kit/strata-loader.js"></script>
+<script src="strata-boot.js"></script>
+<script>
+  StrataBoot.start({
+    wasm: 'belfry-bats.wasm',
+    title: 'Belfry Bats',
+    fallback: { href: 'https://danielstephenson.dev/play', text: 'More games' },
+    canvas: document.getElementById('canvas')
+  }).catch(function () {});  // the loading shell already shows why
+</script>
+</body>
+</html>
