@@ -37,7 +37,10 @@ chimneys, keep clear of the owls on watch, and gather the stray bats hanging fro
   below the horizon, point lights for the windows and the belfry's lantern.
 - `app/web_main.cpp` and `web/shell.html`: the browser page, behind Strata's web kit loading shell.
 
-The flock is capped at 32 bats, with no shadow maps, so it stays smooth on a phone.
+The flock is capped at 32 bats, with no shadow maps, so it stays smooth on a phone. On a phone held upright the view
+is narrower, and a marker at the right edge points the way to the belfry:
+
+<img src="docs/images/belfry-bats-phone.png" alt="The flock over the village on an iPhone-sized screen held upright" width="240">
 
 ### Build and test
 
