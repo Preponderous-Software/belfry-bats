@@ -61,6 +61,14 @@ CI (`.github/workflows/browser.yml`) builds the page, runs the tests as wasm und
 Chromium on a desktop and an iPhone 13 profile (`web/smoke/smoke.cjs`), checks the layout on four more phones
 (`web/smoke/layout.cjs`), and deploys `main` to the arcade.
 
+## Releases
+
+A release is a bare version tag (`0.1.0`, no `v`) that matches `project(... VERSION ...)` in
+`CMakeLists.txt`. Pushing one makes `.github/workflows/release.yml` build the browser game and
+attach `BelfryBats-<version>-web.zip` (the page, its `.js` and `.wasm`, and the licences) and its
+`.sha256` to the GitHub release. The arcade still deploys every push to `main`; a release does not
+change what it serves.
+
 ## Licence
 
 MIT; see [LICENSE](LICENSE). miniaudio (`third_party/miniaudio/`) is public domain (or MIT No Attribution).
